@@ -29,7 +29,7 @@ pub fn set_session(
   expiration: Int,
 ) {
   response
-  |> wisp.set_cookie(request, "sessy", session, wisp.Signed, expiration)
+  |> wisp.set_cookie(request, "wisp_session", session, wisp.Signed, expiration)
 }
 
 /// Clear the session cookie
@@ -61,7 +61,7 @@ pub fn read_session(
   request: Request,
   decoder: fn(String) -> Option(a),
 ) -> Option(a) {
-  wisp.get_cookie(request, "sessy", wisp.Signed)
+  wisp.get_cookie(request, "wisp_session", wisp.Signed)
   |> option.from_result
   |> option.map(decoder)
   |> option.flatten
