@@ -15,7 +15,7 @@ import wisp.{type Request, type Response}
 /// }
 /// ...
 /// wisp.ok()
-/// |> wisp_session.set_session(
+/// |> sessy.set_session(
 ///   req,
 ///   encode_session(Session(id: 123, username: "john_doe")),
 ///   365 * 24 * 60 * 60
@@ -29,14 +29,14 @@ pub fn set_session(
   expiration: Int,
 ) {
   response
-  |> wisp.set_cookie(request, "wisp_session", session, wisp.Signed, expiration)
+  |> wisp.set_cookie(request, "sessy", session, wisp.Signed, expiration)
 }
 
 /// Clear the session cookie
 /// # Examples
 /// ```gleam
 /// wisp.redirect("/")
-/// |> wisp_session.clear_session(req)
+/// |> sessy.clear_session(req)
 /// ```
 pub fn clear_session(response: Response, request: Request) {
   set_session(response, request, "", 0)
@@ -54,14 +54,14 @@ pub fn clear_session(response: Response, request: Request) {
 ///   // Your decoder implementation
 /// }
 ///
-/// let session = wisp_session.require_session(req, decode_session)
+/// let session = sessy.require_session(req, decode_session)
 /// ```
 ///
 pub fn read_session(
   request: Request,
   decoder: fn(String) -> Option(a),
 ) -> Option(a) {
-  wisp.get_cookie(request, "wisp_session", wisp.Signed)
+  wisp.get_cookie(request, "sessy", wisp.Signed)
   |> option.from_result
   |> option.map(decoder)
   |> option.flatten
@@ -81,7 +81,7 @@ pub fn read_session(
 /// }
 ///
 /// ...
-/// use session <- wisp_session.require_session(req, decode_session)
+/// use session <- sessy.require_session(req, decode_session)
 /// ```
 ///
 pub fn require_session(
@@ -110,7 +110,7 @@ pub fn require_session(
 /// }
 ///
 /// ...
-/// use <- wisp_session.require_session(req, decode_session)
+/// use <- sessy.require_session(req, decode_session)
 /// ```
 ///
 pub fn require_no_session(

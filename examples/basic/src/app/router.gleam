@@ -5,8 +5,8 @@ import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/string_builder
+import sessy
 import wisp.{type Request, type Response}
-import wisp_session
 
 pub fn handle_request(req: Request) -> Response {
   use req, user_session <- web.middleware(req)
@@ -50,7 +50,7 @@ pub fn session_handler(req: Request) -> Response {
 }
 
 pub fn new_session(req) -> Response {
-  use <- wisp_session.require_no_session(req, session.decode)
+  use <- sessy.require_no_session(req, session.decode)
   "
   <form action='/session' method='post'>
     <label>
@@ -64,13 +64,13 @@ pub fn new_session(req) -> Response {
 }
 
 pub fn create_session(req: Request) -> Response {
-  use <- wisp_session.require_no_session(req, session.decode)
+  use <- sessy.require_no_session(req, session.decode)
   use formdata <- wisp.require_form(req)
 
   case list.key_find(formdata.values, "username") {
     Ok(username) -> {
       wisp.redirect("/")
-      |> wisp_session.set_session(
+      |> sessy.set_session(
         req,
         session.encode(Session(username:, id: 123)),
         365 * 24 * 60 * 60,
@@ -83,8 +83,8 @@ pub fn create_session(req: Request) -> Response {
 }
 
 pub fn destroy_session(req: Request) -> Response {
-  use _ <- wisp_session.require_session(req, session.decode)
+  use _ <- sessy.require_session(req, session.decode)
 
   wisp.redirect("/session")
-  |> wisp_session.clear_session(req)
+  |> sessy.clear_session(req)
 }

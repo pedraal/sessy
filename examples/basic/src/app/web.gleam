@@ -1,7 +1,7 @@
 import app/session.{type Session}
 import gleam/option
+import sessy
 import wisp
-import wisp_session
 
 pub fn middleware(
   req: wisp.Request,
@@ -11,7 +11,7 @@ pub fn middleware(
   use <- wisp.log_request(req)
   use <- wisp.rescue_crashes
   use req <- wisp.handle_head(req)
-  let session = wisp_session.read_session(req, session.decode)
+  let session = sessy.read_session(req, session.decode)
   case session {
     option.Some(s) -> wisp.log_info(s.username <> " request")
     _ -> Nil

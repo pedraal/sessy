@@ -1,11 +1,14 @@
-# wisp_session
+# sessy
 
-wisp_session is a set of utilities for using cookie-based user sessions with the wisp web framework
+sessy is a set of utilities for using cookie-based sessions with the wisp web framework
 
-[![Package Version](https://img.shields.io/hexpm/v/wisp_session)](https://hex.pm/packages/wisp_session)
-[![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/wisp_session/)
+[![Package Version](https://img.shields.io/hexpm/v/sessy)](https://hex.pm/packages/sessy)
+[![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/sessy/)
 
 ## Setting a user session
+In sessy, session cookie is signed using the wisp secret_key_base.
+All you need is to give sessy an encoding function that returns a stringified version of your data structure.
+Here is an example of a JSON based session :
 ```gleam
 pub type Session {
   Session(id: Int, username: String)
@@ -22,7 +25,7 @@ pub fn encode_session(session: Session) {
 fn login_handler(req) {
   use user <- login(req)
   wisp.redirect("/")
-  |> wisp_session.set_session(
+  |> sessy.set_session(
     req,
     encode_session(Session(id: user.id, username: user.username)),
     365 * 24 * 60 * 60,
@@ -31,11 +34,12 @@ fn login_handler(req) {
 
 fn logout_handler(req) {
   wisp.redirect("/session")
-  |> wisp_session.clear_session(req)
+  |> sessy.clear_session(req)
 }
 ```
 
 ## Reading a user session
+Using the previous JSON based session data structure, you can decode user's session like this:
 ```gleam
 pub type Session {
   Session(id: Int, username: String)
@@ -54,20 +58,20 @@ pub fn decode(session: String) {
 }
 
 fn posts_handler(req) {
-  let session = wisp_session.read_session(req, decode)
+  let session = sessy.read_session(req, decode)
   // do something with session
 }
 ```
 
 ## User session guard
 At some point of your application you will probably need to ensure a user has a session or not.
-For this, you can use `wisp_session.require_session` and `wisp_session.require_no_session` middlewares. They will respectively return a 401 and 403 if condition is not met.
+For this, you can use `sessy.require_session` and `sessy.require_no_session` middlewares. They will respectively return a 401 and 403 if condition is not met.
 
 ```gleam
 // For a set of routes
 case wisp.path_segments(req) {
   ["admin",..] -> {
-    use session <- wisp_session.require_session(req, decode_session)
+    use session <- sessy.require_session(req, decode_session)
     case wisp.path_segments(req) {
       ["admin", "users"] -> users_page(req)
       ["admin", "posts"] -> posts_page(req)
@@ -77,7 +81,7 @@ case wisp.path_segments(req) {
 
 // For a single route
 fn login_page(req) {
-  use <- wisp_session.require_no_session(req)
+  use <- sessy.require_no_session(req)
   // render a login page
 }
 ```

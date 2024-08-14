@@ -6,9 +6,9 @@ import gleam/result
 import gleam/string
 import gleeunit
 import gleeunit/should
+import sessy
 import wisp
 import wisp/testing
-import wisp_session
 
 pub fn main() {
   gleeunit.main()
@@ -19,7 +19,7 @@ pub fn set_session_test() {
 
   let response =
     wisp.redirect("/")
-    |> wisp_session.set_session(
+    |> sessy.set_session(
       request,
       "id=123;username=john_doe",
       365 * 24 * 60 * 60,
@@ -41,7 +41,7 @@ pub fn clear_session_test() {
 
   let cookie_value =
     wisp.redirect("/")
-    |> wisp_session.clear_session(request)
+    |> sessy.clear_session(request)
     |> response.get_cookies
     |> dict.from_list
     |> dict.get("wisp_session")
@@ -60,14 +60,14 @@ pub fn read_session_test() {
       wisp.Signed,
     )
 
-  let session = wisp_session.read_session(request, decode_session)
+  let session = sessy.read_session(request, decode_session)
   should.equal(session, Some(["id=123", "username=john_doe"]))
 }
 
 pub fn require_session_test() {
   let request = testing.get("/", [])
   let response =
-    wisp_session.require_session(request, decode_session, fn(_b) { wisp.ok() })
+    sessy.require_session(request, decode_session, fn(_b) { wisp.ok() })
 
   response.status
   |> should.equal(401)
@@ -80,7 +80,7 @@ pub fn require_session_test() {
       wisp.Signed,
     )
   let response =
-    wisp_session.require_session(request, decode_session, fn(_b) { wisp.ok() })
+    sessy.require_session(request, decode_session, fn(_b) { wisp.ok() })
 
   response.status
   |> should.equal(200)
@@ -89,7 +89,7 @@ pub fn require_session_test() {
 pub fn require_no_session_test() {
   let request = testing.get("/", [])
   let response =
-    wisp_session.require_no_session(request, decode_session, fn() { wisp.ok() })
+    sessy.require_no_session(request, decode_session, fn() { wisp.ok() })
 
   response.status
   |> should.equal(200)
@@ -102,7 +102,7 @@ pub fn require_no_session_test() {
       wisp.Signed,
     )
   let response =
-    wisp_session.require_no_session(request, decode_session, fn() { wisp.ok() })
+    sessy.require_no_session(request, decode_session, fn() { wisp.ok() })
 
   response.status
   |> should.equal(403)

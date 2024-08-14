@@ -1,9 +1,9 @@
-name = "wisp_session"
+name = "sessy"
 version = "0.1.0"
 description = "User session management utilities for the Wisp web framework"
 licences = ["Apache-2.0"]
 
-repository = { type = "github", user = "pedraal", repo = "wisp_session" }
+repository = { type = "github", user = "pedraal", repo = "sessy" }
 # links = [{ title = "Website", href = "" }]
 
 [dependencies]
