@@ -1,7 +1,6 @@
 import gleam/crypto
 import gleam/dict
 import gleam/http/response
-import gleam/option.{Some}
 import gleam/result
 import gleam/string
 import gleeunit
@@ -19,11 +18,7 @@ pub fn set_session_test() {
 
   let response =
     wisp.redirect("/")
-    |> sessy.set_session(
-      request,
-      "id=123;username=john_doe",
-      365 * 24 * 60 * 60,
-    )
+    |> sessy.set_session(request, "123;john_doe", 365 * 24 * 60 * 60)
 
   let cookies =
     response.get_cookies(response)
@@ -51,17 +46,29 @@ pub fn clear_session_test() {
   |> should.equal(cookie_value)
 }
 
-pub fn read_session_test() {
+pub fn read_session_with_valid_cookie_test() {
   let request =
     testing.get("/", [])
-    |> testing.set_cookie(
-      "wisp_session",
-      "id=123;username=john_doe",
-      wisp.Signed,
-    )
+    |> testing.set_cookie("wisp_session", "123;john_doe", wisp.Signed)
 
-  let session = sessy.read_session(request, decode_session)
-  should.equal(session, Some(["id=123", "username=john_doe"]))
+  sessy.read_session(request, decode_session)
+  |> should.equal(Ok(["123", "john_doe"]))
+}
+
+pub fn read_session_with_invalid_cookie_test() {
+  let request =
+    testing.get("/", [])
+    |> testing.set_cookie("wisp_session", "lorem", wisp.Signed)
+
+  sessy.read_session(request, decode_session)
+  |> should.equal(Error(sessy.SessionInvalid))
+}
+
+pub fn read_session_with_missing_cookie_test() {
+  let request = testing.get("/", [])
+
+  sessy.read_session(request, decode_session)
+  |> should.equal(Error(sessy.SessionMissing))
 }
 
 pub fn require_session_test() {
@@ -74,11 +81,7 @@ pub fn require_session_test() {
 
   let request =
     testing.get("/", [])
-    |> testing.set_cookie(
-      "wisp_session",
-      "id=123;username=john_doe",
-      wisp.Signed,
-    )
+    |> testing.set_cookie("wisp_session", "123;john_doe", wisp.Signed)
   let response =
     sessy.require_session(request, decode_session, fn(_b) { wisp.ok() })
 
@@ -96,11 +99,7 @@ pub fn require_no_session_test() {
 
   let request =
     testing.get("/", [])
-    |> testing.set_cookie(
-      "wisp_session",
-      "id=123;username=john_doe",
-      wisp.Signed,
-    )
+    |> testing.set_cookie("wisp_session", "123;john_doe", wisp.Signed)
   let response =
     sessy.require_no_session(request, decode_session, fn() { wisp.ok() })
 
@@ -109,5 +108,8 @@ pub fn require_no_session_test() {
 }
 
 fn decode_session(str: String) {
-  Some(string.split(str, on: ";"))
+  case string.split(str, ";") {
+    [id, username] -> Ok([id, username])
+    _ -> Error(Nil)
+  }
 }

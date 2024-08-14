@@ -3,7 +3,6 @@ import app/web
 import gleam/http.{Delete, Get, Post}
 import gleam/int
 import gleam/list
-import gleam/option.{type Option, None, Some}
 import gleam/string_builder
 import sessy
 import wisp.{type Request, type Response}
@@ -18,9 +17,9 @@ pub fn handle_request(req: Request) -> Response {
   }
 }
 
-pub fn home(_req, session: Option(Session)) -> Response {
+pub fn home(_req, session: Result(Session, sessy.SessionError)) -> Response {
   case session {
-    Some(s) -> {
+    Ok(s) -> {
       [
         "<h1>Hello, "
           <> wisp.escape_html(s.username)
@@ -34,7 +33,7 @@ pub fn home(_req, session: Option(Session)) -> Response {
       |> string_builder.from_strings
       |> wisp.html_response(200)
     }
-    None -> {
+    _ -> {
       wisp.redirect("/session")
     }
   }

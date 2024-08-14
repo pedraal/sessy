@@ -1,6 +1,11 @@
 import gleam/http/response.{Response as HttpResponse}
-import gleam/option.{type Option, Some}
+import gleam/result
 import wisp.{type Request, type Response}
+
+pub type SessionError {
+  SessionMissing
+  SessionInvalid
+}
 
 /// Set the session cookie
 /// Session value must be encoded to string
@@ -57,17 +62,17 @@ pub fn clear_session(response: Response, request: Request) {
 /// let session = sessy.require_session(req, decode_session)
 /// ```
 ///
-pub fn read_session(
-  request: Request,
-  decoder: fn(String) -> Option(a),
-) -> Option(a) {
-  wisp.get_cookie(request, "wisp_session", wisp.Signed)
-  |> option.from_result
-  |> option.map(decoder)
-  |> option.flatten
+pub fn read_session(request: Request, decoder: fn(String) -> Result(a, b)) {
+  let cookie = wisp.get_cookie(request, "wisp_session", wisp.Signed)
+
+  case result.map(cookie, decoder) {
+    Ok(Ok(session)) -> Ok(session)
+    Ok(Error(_)) -> Error(SessionInvalid)
+    Error(_) -> Error(SessionMissing)
+  }
 }
 
-/// this middleware will get and decode a session
+/// This middleware will get and decode a session
 /// an empty response with status code 401: unauthorized
 /// is returned if no session found
 /// # examples
@@ -86,12 +91,12 @@ pub fn read_session(
 ///
 pub fn require_session(
   request: Request,
-  decoder: fn(String) -> Option(a),
+  decoder: fn(String) -> Result(a, b),
   next: fn(a) -> Response,
 ) -> Response {
   let session = read_session(request, decoder)
   case session {
-    Some(decoded) -> next(decoded)
+    Ok(decoded) -> next(decoded)
     _ -> HttpResponse(401, [], wisp.Empty)
   }
 }
@@ -115,12 +120,12 @@ pub fn require_session(
 ///
 pub fn require_no_session(
   request: Request,
-  decoder: fn(String) -> Option(a),
+  decoder: fn(String) -> Result(a, b),
   next: fn() -> Response,
 ) -> Response {
   let session = read_session(request, decoder)
   case session {
-    Some(_) -> HttpResponse(403, [], wisp.Empty)
+    Ok(_) -> HttpResponse(403, [], wisp.Empty)
     _ -> next()
   }
 }

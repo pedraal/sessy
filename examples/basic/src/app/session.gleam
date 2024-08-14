@@ -1,6 +1,5 @@
 import gleam/dynamic
 import gleam/json
-import gleam/option
 
 pub type Session {
   Session(id: Int, username: String)
@@ -23,5 +22,4 @@ pub fn decode(session: String) {
     )
 
   json.decode(from: session, using: decoder)
-  |> option.from_result
 }
